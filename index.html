@@ -1,45 +1,1213 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Pro — Offline Audit Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #131929;
+    --surface2: #1a2235;
+    --border: #242d42;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8edf8;
+    --text2: #8896b3;
+    --text3: #4a5568;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
 
-<title>Offline Audit Form</title>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<link rel="stylesheet" href="styles.css">
-<link rel="manifest" href="manifest.json">
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
+  /* Background mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(79,142,247,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(124,58,237,0.07) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  .status-dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Tab Nav */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 32px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 11px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .tab.active {
+    background: var(--surface2);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .tab .badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 99px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  /* Panel */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Section */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.3px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title .icon {
+    width: 30px; height: 30px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* Form Fields */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-grid.single { grid-template-columns: 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  input[type="time"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
+  }
+
+  textarea { resize: vertical; min-height: 90px; }
+
+  select option { background: var(--surface); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #3b6fd4);
+    color: white;
+    box-shadow: 0 4px 14px rgba(79,142,247,0.3);
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,142,247,0.4); }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success), #059669);
+    color: white;
+    box-shadow: 0 4px 14px rgba(16,185,129,0.25);
+  }
+
+  .btn-success:hover { transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  .btn-danger-ghost {
+    background: transparent;
+    border: 1px solid rgba(239,68,68,0.3);
+    color: var(--danger);
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .btn-danger-ghost:hover { background: rgba(239,68,68,0.08); }
+
+  .btn-sm {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  /* Status Pills */
+  .status-pass { color: var(--success); }
+  .status-fail { color: var(--danger); }
+  .status-na { color: var(--warning); }
+
+  /* Custom Questions Builder */
+  .question-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .question-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .question-item:hover { border-color: rgba(79,142,247,0.3); }
+
+  .question-item-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .question-number {
+    width: 26px; height: 26px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .question-inputs { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+  .question-row { display: flex; gap: 10px; align-items: center; }
+
+  .question-row input { flex: 1; }
+  .question-row select { width: 160px; flex-shrink: 0; }
+
+  .add-question-btn {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text3);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .add-question-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(79,142,247,0.04);
+  }
+
+  /* Dynamic Question Responses */
+  .response-question {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .response-question-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .response-question-label .q-num {
+    display: inline-block;
+    background: rgba(79,142,247,0.15);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+
+  .radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .radio-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    transition: all 0.18s;
+    user-select: none;
+  }
+
+  .radio-pill input[type="radio"] { display: none; }
+
+  .radio-pill:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.12);
+    color: var(--text);
+  }
+
+  .radio-pill.pass:has(input:checked) { border-color: var(--success); background: rgba(16,185,129,0.12); color: var(--success); }
+  .radio-pill.fail:has(input:checked) { border-color: var(--danger); background: rgba(239,68,68,0.12); color: var(--danger); }
+  .radio-pill.na:has(input:checked) { border-color: var(--warning); background: rgba(245,158,11,0.12); color: var(--warning); }
+
+  .rating-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .rating-star {
+    width: 36px; height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text3);
+  }
+
+  .rating-star.active {
+    background: rgba(245,158,11,0.15);
+    border-color: var(--warning);
+    color: var(--warning);
+  }
+
+  /* Saved Records */
+  .records-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .record-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .record-card:hover { border-color: rgba(79,142,247,0.3); }
+
+  .record-info { flex: 1; }
+
+  .record-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .record-meta {
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .record-status {
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .record-status.synced {
+    background: rgba(16,185,129,0.12);
+    color: var(--success);
+    border: 1px solid rgba(16,185,129,0.3);
+  }
+
+  .record-status.pending {
+    background: rgba(245,158,11,0.12);
+    color: var(--warning);
+    border: 1px solid rgba(245,158,11,0.3);
+  }
+
+  /* Actions row */
+  .actions-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease;
+    min-width: 260px;
+  }
+
+  .toast.success { border-color: rgba(16,185,129,0.4); }
+  .toast.error { border-color: rgba(239,68,68,0.4); }
+  .toast.info { border-color: rgba(79,142,247,0.4); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .tabs { flex-wrap: wrap; }
+    .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .question-row { flex-direction: column; }
+    .question-row select { width: 100%; }
+  }
+</style>
 </head>
-
 <body>
 
-<h1>Audit Form</h1>
+<div class="toast-container" id="toastContainer"></div>
 
-<form id="auditForm">
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🔍</div>
+      <div>
+        <div class="logo-text">Audit<span>Pro</span></div>
+        <div style="font-size:11px; color:var(--text2); margin-top:1px;">Offline-First Audit Tool</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <div class="status-badge">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Online</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="syncAudits()">⬆ Sync Now</button>
+    </div>
+  </div>
 
-<input id="auditName" placeholder="Audit Name" required>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('form', this)">📋 New Audit</button>
+    <button class="tab" onclick="switchTab('builder', this)">🛠 Question Builder</button>
+    <button class="tab" onclick="switchTab('records', this); renderRecords()">
+      📁 Records <span class="badge" id="recordBadge">0</span>
+    </button>
+  </div>
 
-<input id="auditor" placeholder="Auditor Name" required>
+  <!-- Panel: Audit Form -->
+  <div class="panel active" id="panel-form">
 
-<select id="status">
+    <!-- Meta Info -->
+    <div class="section">
+      <div class="section-title"><div class="icon">ℹ️</div> Audit Information</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Audit Name *</label>
+          <input type="text" id="auditName" placeholder="e.g. Q1 Safety Audit">
+        </div>
+        <div class="field">
+          <label>Auditor Name *</label>
+          <input type="text" id="auditor" placeholder="Your full name">
+        </div>
+        <div class="field">
+          <label>Site / Location</label>
+          <input type="text" id="site" placeholder="e.g. Warehouse A, Floor 2">
+        </div>
+        <div class="field">
+          <label>Audit Category</label>
+          <select id="category">
+            <option value="">Select category...</option>
+            <option>Safety</option>
+            <option>Quality</option>
+            <option>Compliance</option>
+            <option>Environmental</option>
+            <option>IT Security</option>
+            <option>Finance</option>
+            <option>HR</option>
+            <option>Operations</option>
+            <option>Custom</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="auditDate">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="auditTime">
+        </div>
+        <div class="field full">
+          <label>Overall Status</label>
+          <div class="radio-group">
+            <label class="radio-pill pass"><input type="radio" name="overall" value="Pass"> ✅ Pass</label>
+            <label class="radio-pill fail"><input type="radio" name="overall" value="Fail"> ❌ Fail</label>
+            <label class="radio-pill na"><input type="radio" name="overall" value="Partial"> ⚠️ Partial</label>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<option value="Pass">Pass</option>
-<option value="Fail">Fail</option>
+    <!-- Custom Questions Responses -->
+    <div class="section" id="questionsSection">
+      <div class="section-title"><div class="icon">❓</div> Audit Questions</div>
+      <div id="questionResponses">
+        <div class="empty-state">
+          <div class="icon">🛠</div>
+          <p>No questions added yet.<br>Go to <strong>Question Builder</strong> to add your custom questions.</p>
+        </div>
+      </div>
+    </div>
 
-</select>
+    <!-- Remarks & Evidence -->
+    <div class="section">
+      <div class="section-title"><div class="icon">📝</div> Remarks & Notes</div>
+      <div class="form-grid single">
+        <div class="field">
+          <label>General Remarks</label>
+          <textarea id="remarks" placeholder="Add any general observations, findings, or notes..."></textarea>
+        </div>
+        <div class="field">
+          <label>Corrective Actions Required</label>
+          <textarea id="corrective" placeholder="List any corrective actions needed..."></textarea>
+        </div>
+      </div>
+    </div>
 
-<textarea id="remarks" placeholder="Remarks"></textarea>
+    <!-- Completion -->
+    <div class="section">
+      <div class="section-title"><div class="icon">📊</div> Completion</div>
+      <div class="progress-label">
+        <span id="progressLabel">Questions answered: 0 / 0</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
 
-<button type="submit">Save Audit</button>
+    <div class="actions-row">
+      <button class="btn btn-ghost" onclick="clearForm()">🗑 Clear Form</button>
+      <button class="btn btn-success" onclick="saveAuditForm()">💾 Save Audit</button>
+    </div>
+  </div>
 
-</form>
+  <!-- Panel: Question Builder -->
+  <div class="panel" id="panel-builder">
+    <div class="section">
+      <div class="section-title"><div class="icon">🛠</div> Build Your Question Set</div>
+      <p style="font-size:13px; color:var(--text2); margin-bottom:20px;">Create a reusable set of questions for your audits. These will appear in the <strong>New Audit</strong> form.</p>
 
-<button onclick="syncAudits()">Sync Now</button>
+      <div class="question-list" id="questionList"></div>
 
-<script src="db.js"></script>
-<script src="sync.js"></script>
-<script src="app.js"></script>
+      <button class="add-question-btn" onclick="addQuestion()">+ Add Question</button>
+    </div>
 
+    <div class="section">
+      <div class="section-title"><div class="icon">📦</div> Quick Templates</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('safety')">🦺 Safety Audit</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('quality')">✅ Quality Check</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('it')">🔒 IT Security</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadTemplate('hr')">👥 HR Compliance</button>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-ghost" onclick="clearQuestions()">🗑 Clear All</button>
+      <button class="btn btn-primary" onclick="saveQuestions()">💾 Save Question Set</button>
+    </div>
+  </div>
+
+  <!-- Panel: Records -->
+  <div class="panel" id="panel-records">
+    <div class="section">
+      <div class="section-title"><div class="icon">📁</div> Saved Audit Records</div>
+      <div class="records-list" id="recordsList">
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>No saved audits yet. Complete a form and save it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DB — IndexedDB
+// ═══════════════════════════════════════
+let db;
+const dbReq = indexedDB.open("AuditProDB", 2);
+
+dbReq.onupgradeneeded = e => {
+  const d = e.target.result;
+  if (!d.objectStoreNames.contains("audits")) {
+    d.createObjectStore("audits", { keyPath: "id", autoIncrement: true });
+  }
+  if (!d.objectStoreNames.contains("questions")) {
+    d.createObjectStore("questions", { keyPath: "id", autoIncrement: true });
+  }
+};
+
+dbReq.onsuccess = e => {
+  db = e.target.result;
+  updateBadge();
+  loadSavedQuestions();
+};
+
+dbReq.onerror = () => toast("IndexedDB failed to open", "error");
+
+function dbOp(store, mode, fn) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, mode);
+    const s = tx.objectStore(store);
+    const r = fn(s);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+
+async function saveRecord(audit) { return dbOp("audits", "readwrite", s => s.add(audit)); }
+async function getAllRecords() { return dbOp("audits", "readonly", s => s.getAll()); }
+async function deleteRecord(id) { return dbOp("audits", "readwrite", s => s.delete(id)); }
+async function saveQuestionsDB(qs) {
+  const tx = db.transaction("questions", "readwrite");
+  const s = tx.objectStore("questions");
+  s.clear();
+  qs.forEach(q => s.add(q));
+  return new Promise(resolve => tx.oncomplete = resolve);
+}
+async function getQuestionsDB() { return dbOp("questions", "readonly", s => s.getAll()); }
+
+// ═══════════════════════════════════════
+// Questions State
+// ═══════════════════════════════════════
+let questions = []; // [{text, type}]
+
+const TEMPLATES = {
+  safety: [
+    { text: "Are all fire exits clearly marked and accessible?", type: "pass-fail" },
+    { text: "Are fire extinguishers in date and accessible?", type: "pass-fail" },
+    { text: "Is PPE available and in good condition?", type: "pass-fail" },
+    { text: "Are hazardous materials properly labeled and stored?", type: "pass-fail" },
+    { text: "Is emergency contact information posted?", type: "pass-fail" },
+    { text: "Rate the overall safety culture at this site.", type: "rating" },
+    { text: "Additional safety observations:", type: "text" },
+  ],
+  quality: [
+    { text: "Are quality standards documented and accessible?", type: "pass-fail" },
+    { text: "Is product inspection being carried out correctly?", type: "pass-fail" },
+    { text: "Are non-conforming items clearly segregated?", type: "pass-fail" },
+    { text: "Rate the overall product quality.", type: "rating" },
+    { text: "Are calibration records up to date?", type: "yes-no" },
+    { text: "Notes on quality findings:", type: "text" },
+  ],
+  it: [
+    { text: "Are all workstations password protected?", type: "yes-no" },
+    { text: "Is antivirus software installed and updated?", type: "yes-no" },
+    { text: "Are sensitive files encrypted?", type: "yes-no" },
+    { text: "Is there a documented incident response plan?", type: "yes-no" },
+    { text: "Rate the overall IT security posture.", type: "rating" },
+    { text: "Security vulnerabilities identified:", type: "text" },
+  ],
+  hr: [
+    { text: "Are employee records up to date?", type: "yes-no" },
+    { text: "Have all employees completed mandatory training?", type: "pass-fail" },
+    { text: "Are HR policies posted and accessible?", type: "yes-no" },
+    { text: "Is grievance procedure clearly communicated?", type: "yes-no" },
+    { text: "Rate employee satisfaction based on observation.", type: "rating" },
+    { text: "HR compliance notes:", type: "text" },
+  ],
+};
+
+function loadTemplate(key) {
+  if (questions.length > 0 && !confirm("This will replace your current questions. Continue?")) return;
+  questions = TEMPLATES[key].map((q, i) => ({ ...q, id: Date.now() + i }));
+  renderQuestionBuilder();
+  toast("Template loaded!", "success");
+}
+
+function addQuestion(q = null) {
+  questions.push({
+    id: Date.now() + Math.random(),
+    text: q ? q.text : "",
+    type: q ? q.type : "pass-fail"
+  });
+  renderQuestionBuilder();
+}
+
+function removeQuestion(id) {
+  questions = questions.filter(q => q.id !== id);
+  renderQuestionBuilder();
+}
+
+function renderQuestionBuilder() {
+  const list = document.getElementById("questionList");
+  if (questions.length === 0) {
+    list.innerHTML = `<p style="color:var(--text3); font-size:13px; text-align:center; padding:20px 0;">No questions yet. Click <strong>Add Question</strong> or choose a template above.</p>`;
+    return;
+  }
+  list.innerHTML = questions.map((q, i) => `
+    <div class="question-item" data-id="${q.id}">
+      <div class="question-item-header">
+        <div class="question-number">${i + 1}</div>
+        <div class="question-inputs">
+          <div class="question-row">
+            <input type="text" value="${escHtml(q.text)}" placeholder="Type your question here..."
+              onchange="updateQuestion('${q.id}', 'text', this.value)">
+            <select onchange="updateQuestion('${q.id}', 'type', this.value)">
+              <option value="pass-fail" ${q.type === 'pass-fail' ? 'selected' : ''}>Pass / Fail / N/A</option>
+              <option value="yes-no" ${q.type === 'yes-no' ? 'selected' : ''}>Yes / No</option>
+              <option value="rating" ${q.type === 'rating' ? 'selected' : ''}>Rating (1–5)</option>
+              <option value="text" ${q.type === 'text' ? 'selected' : ''}>Text Response</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-danger-ghost" onclick="removeQuestion('${q.id}')">✕</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function updateQuestion(id, key, val) {
+  const q = questions.find(q => String(q.id) === String(id));
+  if (q) q[key] = val;
+}
+
+function clearQuestions() {
+  if (!confirm("Clear all questions?")) return;
+  questions = [];
+  renderQuestionBuilder();
+}
+
+async function saveQuestions() {
+  if (questions.some(q => !q.text.trim())) {
+    toast("Please fill in all question texts.", "error");
+    return;
+  }
+  try {
+    await saveQuestionsDB(questions.map(q => ({ text: q.text, type: q.type })));
+    toast("Question set saved!", "success");
+    renderFormQuestions();
+  } catch(e) {
+    toast("Failed to save questions", "error");
+  }
+}
+
+async function loadSavedQuestions() {
+  try {
+    const saved = await getQuestionsDB();
+    questions = saved.map((q, i) => ({ ...q, _id: i }));
+    renderQuestionBuilder();
+    renderFormQuestions();
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// Audit Form — Dynamic Questions
+// ═══════════════════════════════════════
+async function renderFormQuestions() {
+  const container = document.getElementById("questionResponses");
+  const qs = questions.filter(q => q.text);
+
+  if (qs.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🛠</div><p>No questions added yet.<br>Go to <strong>Question Builder</strong> to add your custom questions.</p></div>`;
+    updateProgress();
+    return;
+  }
+
+  container.innerHTML = qs.map((q, i) => {
+    const name = `q_${i}`;
+    let input = '';
+
+    if (q.type === 'pass-fail') {
+      input = `<div class="radio-group">
+        <label class="radio-pill pass" onclick="updateProgress()"><input type="radio" name="${name}" value="Pass"> ✅ Pass</label>
+        <label class="radio-pill fail" onclick="updateProgress()"><input type="radio" name="${name}" value="Fail"> ❌ Fail</label>
+        <label class="radio-pill na" onclick="updateProgress()"><input type="radio" name="${name}" value="N/A"> ➖ N/A</label>
+      </div>`;
+    } else if (q.type === 'yes-no') {
+      input = `<div class="radio-group">
+        <label class="radio-pill pass" onclick="updateProgress()"><input type="radio" name="${name}" value="Yes"> ✅ Yes</label>
+        <label class="radio-pill fail" onclick="updateProgress()"><input type="radio" name="${name}" value="No"> ❌ No</label>
+        <label class="radio-pill na" onclick="updateProgress()"><input type="radio" name="${name}" value="N/A"> ➖ N/A</label>
+      </div>`;
+    } else if (q.type === 'rating') {
+      input = `<div class="rating-group" id="rating_${i}">${[1,2,3,4,5].map(n =>
+        `<div class="rating-star" data-val="${n}" onclick="setRating(${i}, ${n})">★</div>`
+      ).join("")}</div><input type="hidden" name="${name}" value="">`;
+    } else {
+      input = `<textarea name="${name}" placeholder="Enter your response..." oninput="updateProgress()" style="margin-top:0;"></textarea>`;
+    }
+
+    return `<div class="response-question">
+      <div class="response-question-label"><span class="q-num">Q${i + 1}</span>${escHtml(q.text)}</div>
+      ${input}
+    </div>`;
+  }).join("");
+
+  updateProgress();
+}
+
+function setRating(idx, val) {
+  const stars = document.querySelectorAll(`#rating_${idx} .rating-star`);
+  stars.forEach((s, i) => s.classList.toggle('active', i < val));
+  const input = document.querySelector(`input[name="q_${idx}"]`);
+  if (input) input.value = val;
+  updateProgress();
+}
+
+function updateProgress() {
+  const qs = questions.filter(q => q.text);
+  const total = qs.length;
+  let answered = 0;
+
+  qs.forEach((q, i) => {
+    const name = `q_${i}`;
+    if (q.type === 'text') {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      if (el && el.value.trim()) answered++;
+    } else {
+      const checked = document.querySelector(`input[name="${name}"]:checked`) ||
+                      document.querySelector(`input[name="${name}"][value]:not([value=""])`);
+      if (checked && checked.value) answered++;
+    }
+  });
+
+  const pct = total ? Math.round((answered / total) * 100) : 0;
+  document.getElementById("progressLabel").textContent = `Questions answered: ${answered} / ${total}`;
+  document.getElementById("progressPct").textContent = `${pct}%`;
+  document.getElementById("progressFill").style.width = pct + "%";
+}
+
+// ═══════════════════════════════════════
+// Save Audit
+// ═══════════════════════════════════════
+async function saveAuditForm() {
+  const name = document.getElementById("auditName").value.trim();
+  const auditor = document.getElementById("auditor").value.trim();
+  if (!name || !auditor) { toast("Please fill in Audit Name and Auditor.", "error"); return; }
+
+  const overallEl = document.querySelector("input[name='overall']:checked");
+  const responses = {};
+  questions.filter(q => q.text).forEach((q, i) => {
+    const name = `q_${i}`;
+    if (q.type === 'text') {
+      const el = document.querySelector(`textarea[name="${name}"]`);
+      responses[q.text] = el ? el.value : "";
+    } else {
+      const checked = document.querySelector(`input[name="${name}"]:checked`);
+      const hidden = document.querySelector(`input[name="${name}"][type="hidden"]`);
+      responses[q.text] = checked ? checked.value : (hidden ? hidden.value : "");
+    }
+  });
+
+  const audit = {
+    auditName: name,
+    auditor,
+    site: document.getElementById("site").value,
+    category: document.getElementById("category").value,
+    date: document.getElementById("auditDate").value,
+    time: document.getElementById("auditTime").value,
+    status: overallEl ? overallEl.value : "Not set",
+    remarks: document.getElementById("remarks").value,
+    corrective: document.getElementById("corrective").value,
+    responses,
+    synced: false,
+    savedAt: new Date().toISOString(),
+  };
+
+  try {
+    await saveRecord(audit);
+    toast("Audit saved offline! ✅", "success");
+    updateBadge();
+    clearForm();
+    if (navigator.onLine) syncAudits(true);
+  } catch(e) {
+    toast("Failed to save audit", "error");
+  }
+}
+
+function clearForm() {
+  document.getElementById("auditName").value = "";
+  document.getElementById("auditor").value = "";
+  document.getElementById("site").value = "";
+  document.getElementById("category").value = "";
+  document.getElementById("auditDate").value = "";
+  document.getElementById("auditTime").value = "";
+  document.getElementById("remarks").value = "";
+  document.getElementById("corrective").value = "";
+  document.querySelectorAll("input[name='overall']").forEach(r => r.checked = false);
+  renderFormQuestions();
+}
+
+// ═══════════════════════════════════════
+// Records
+// ═══════════════════════════════════════
+async function renderRecords() {
+  const list = document.getElementById("recordsList");
+  const records = await getAllRecords();
+
+  if (records.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No saved audits yet.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = records.reverse().map(r => `
+    <div class="record-card">
+      <div class="record-info">
+        <div class="record-name">${escHtml(r.auditName)}</div>
+        <div class="record-meta">
+          <span>👤 ${escHtml(r.auditor)}</span>
+          ${r.site ? `<span>📍 ${escHtml(r.site)}</span>` : ''}
+          ${r.category ? `<span>🏷 ${escHtml(r.category)}</span>` : ''}
+          <span>📅 ${r.date || r.savedAt?.split("T")[0] || "—"}</span>
+          <span style="color:${r.status === 'Pass' ? 'var(--success)' : r.status === 'Fail' ? 'var(--danger)' : 'var(--warning)'}">
+            ${r.status === 'Pass' ? '✅' : r.status === 'Fail' ? '❌' : '⚠️'} ${r.status}
+          </span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="record-status ${r.synced ? 'synced' : 'pending'}">${r.synced ? '☁ Synced' : '⏳ Pending'}</div>
+        <button class="btn btn-danger-ghost" onclick="deleteRec(${r.id})">✕</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function deleteRec(id) {
+  if (!confirm("Delete this record?")) return;
+  await deleteRecord(id);
+  updateBadge();
+  renderRecords();
+  toast("Record deleted", "info");
+}
+
+async function updateBadge() {
+  const records = await getAllRecords();
+  document.getElementById("recordBadge").textContent = records.length;
+}
+
+// ═══════════════════════════════════════
+// Sync
+// ═══════════════════════════════════════
+async function syncAudits(silent = false) {
+  if (!navigator.onLine) {
+    if (!silent) toast("You are offline. Connect to sync.", "error");
+    return;
+  }
+  const records = await getAllRecords();
+  const pending = records.filter(r => !r.synced);
+  if (pending.length === 0) {
+    if (!silent) toast("All audits are already synced!", "info");
+    return;
+  }
+  // Simulate sync (replace URL with real endpoint)
+  for (const audit of pending) {
+    try {
+      // In real use: await fetch("http://localhost:3000/save", { method:"POST", ... })
+      await new Promise(r => setTimeout(r, 300)); // simulate network
+      // Mark as synced (in real use, delete or mark)
+      if (!silent) console.log("Would sync:", audit);
+    } catch(e) {}
+  }
+  if (!silent) toast(`Synced ${pending.length} audit(s) ✅`, "success");
+}
+
+window.addEventListener("online", () => {
+  setStatus(true);
+  syncAudits(true);
+});
+window.addEventListener("offline", () => setStatus(false));
+
+function setStatus(online) {
+  const dot = document.getElementById("statusDot");
+  const txt = document.getElementById("statusText");
+  dot.className = "status-dot" + (online ? "" : " offline");
+  txt.textContent = online ? "Online" : "Offline";
+}
+
+// init
+setStatus(navigator.onLine);
+
+// ═══════════════════════════════════════
+// Tab switching
+// ═══════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("panel-" + id).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ═══════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════
+function toast(msg, type = "info") {
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️"}</span> ${msg}`;
+  document.getElementById("toastContainer").appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ═══════════════════════════════════════
+// Utils
+// ═══════════════════════════════════════
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// Set default date/time
+document.getElementById("auditDate").value = new Date().toISOString().split("T")[0];
+document.getElementById("auditTime").value = new Date().toTimeString().slice(0,5);
+
+// Service Worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    // Would register sw in production
+  });
+}
+</script>
 </body>
 </html>
